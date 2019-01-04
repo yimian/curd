@@ -45,21 +45,21 @@ def delete(session, create_test_table):
     assert d is None
     
     
-def normal_filter(session, create_test_table):
+def normal_filter(session, create_test_table, size=1000):
     collection = create_test_table(session)
-    for i in range(1, 2000):
+    for i in range(1, 2 * size):
         session.create(collection, {'id': i, 'text': 'test'})
         
     items = session.filter(
-        collection, [('<=', 'id', 1000)], fields=['text'], limit=None)
-    assert len(items) == 1000
+        collection, [('<=', 'id', size)], fields=['text'], limit=None)
+    assert len(items) == size
     for item in items:
         assert not item.get('id')
 
     
-def filter_with_order_by(session, create_test_table):
+def filter_with_order_by(session, create_test_table, size=1000):
     collection = create_test_table(session)
-    for i in range(1, 2000):
+    for i in range(1, 2 * size):
         session.create(collection, {'id': i, 'text': 'test'})
 
     items = session.filter(
@@ -85,7 +85,7 @@ def timeout(session, create_test_table):
         print(items)
 
 
-def thread_pool(session, create_test_table):
+def thread_pool(session, create_test_table, size=10000):
     collection = create_test_table(session)
     
     def create(i):
@@ -95,11 +95,11 @@ def thread_pool(session, create_test_table):
         )
     pool_size = 20
     pool = ThreadPool(pool_size)
-    pool.map(create, range(1, 10000))
+    pool.map(create, range(1, size))
     pool.terminate()
     
     items = session.filter(collection, [('>=', 'id', 1)], limit=None)
-    assert len(items) == 9999
+    assert len(items) == size - 1
     t_names = set()
     for item in items:
         t_names.add(item['text'])

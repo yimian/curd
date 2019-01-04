@@ -23,9 +23,16 @@ except Exception:
 else:
     DB_CONNECTION_POOL['cassandra'] = CassandraConnectionPool
 
+try:
+    from .connections.hbase import HbaseConnectionPool
+except Exception:
+    pass
+else:
+    DB_CONNECTION_POOL['hbase'] = HbaseConnectionPool
+
 
 class Session(object):
-    '''
+    """
     mysql db conf
     {
         'type': 'mysql',
@@ -62,7 +69,16 @@ class Session(object):
             'timeout': 60
         }
     }
-    '''
+    hbase db conf
+    {
+        'type': 'hbase',
+        'conf': {
+            'urls': ['http://127.0.0.1:8765/'],
+            'username': '',
+            'password': '',
+        }
+    }
+    """
     
     def __init__(self, dbs=None):
         self._connection_cache = OrderedDict()
@@ -77,7 +93,7 @@ class Session(object):
         if class_conn_pool:
             return class_conn_pool(db['conf'])
         else:
-            if db['type'] in ['mysql', 'cassandra']:
+            if db['type'] in ['mysql', 'cassandra', 'hbase']:
                 raise ProgrammingError('no database driver')
             else:
                 raise ProgrammingError('not supported database')

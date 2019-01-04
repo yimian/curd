@@ -14,3 +14,10 @@ cassandra_conf = {
         'hosts': ['127.0.0.1'],
     }
 }
+
+hbase_conf = {
+    'type': 'hbase',
+    'conf': {
+        'urls': ['http://127.0.0.1:8765/'],
+    }
+}
