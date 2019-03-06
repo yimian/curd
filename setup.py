@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 setup(
     name='curd',
     version='0.0.11',
-    url='https://github.com/jdxin0/curd',
+    url='https://github.com/sfgxuan/curd',
     description='db operations',
     author='jdxin0',
     author_email='jdxin00@gmail.com',
