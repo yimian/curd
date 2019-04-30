@@ -82,6 +82,8 @@ class MysqlConnection(BaseConnection):
 
         conn = pymysql.connect(**conf)
         cursor = conn.cursor(pymysql.cursors.DictCursor)
+        # disable, _show_warnings func will cause mem leak where there are lots of different Dup key warnings
+        cursor._defer_warnings = True
         return conn, cursor
     
     def connect(self, conf):
