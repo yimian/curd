@@ -140,6 +140,9 @@ class CassandraConnectionPool(BaseConnection):
         if rows and mode.upper() != 'IGNORE' and not rows[0].get('applied', True):
             raise DuplicateKeyError
 
+    def create_many(self, collection, data, mode='INSERT', compress_fields=None, **kwargs):
+        raise NotImplementedError('not supported')
+
     def update(self, collection, data, filters, **kwargs):
         filters = self._check_filters(filters)
         query, params = query_parameters_from_update(collection, filters, data)
