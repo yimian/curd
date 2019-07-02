@@ -32,6 +32,9 @@ class BaseConnection(object):
     def create(self, collection, data, mode='INSERT', **kwargs):
         raise NotImplementedError
 
+    def create_many(self, collection, data, mode='INSERT', **kwargs):
+        raise NotImplementedError
+
     def update(self, collection, data, filters, **kwargs):
         raise NotImplementedError
 
