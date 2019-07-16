@@ -1,6 +1,7 @@
 import copy
 import random
 import phoenixdb
+from . import logger
 from ..errors import (
     UnexpectedError, OperationFailure, ProgrammingError,
     ConnectError,
@@ -35,6 +36,12 @@ class HbaseConnection(MysqlConnection):
         return conn, cursor
 
     def _execute(self, query, params, timeout, cursor_func='execute'):
+        # 直接写的upsert，为保证成功，重建连接
+        is_raw_upsert = query.upper().strip().startswith('UPSERT') and params is None  #  直接用sql的插入更新
+        if is_raw_upsert:
+            logger.warning('force close connection and cursor for UPSERT STATEMENT, should use create func instead')
+            self.close()
+
         if not self.cursor:
             self.connect(self._conf)
 
@@ -46,19 +53,24 @@ class HbaseConnection(MysqlConnection):
         except phoenixdb.errors.ProgrammingError as e:
             raise ProgrammingError(origin_error=e)
         except Exception as e:
-            if isinstance(e.args, tuple) and len(e.args) >= 1:
-                if e.args[0] in self.pe_mysql_error_code_list:
-                    raise ProgrammingError(origin_error=e)
-                elif e.args[0] in self.of_mysql_error_code_list:
-                    raise OperationFailure(origin_error=e)
-                else:
-                    raise UnexpectedError(origin_error=e)
+            errs = phoenixdb.errors
+            if any(map(lambda x: isinstance(e, x), [errs.InternalError, errs.OperationalError])):
+                raise OperationFailure(origin_error=e)  # will retry
             else:
                 raise UnexpectedError(origin_error=e)
         else:
-            if not self.cursor._frame:
-                return []
-            return list(self.cursor.fetchall())
+            try:
+                should_have_return = query.upper().strip().startswith('SELECT')
+
+                # 1. 确实有返回的
+                # 2. http连接服务端timeout时，有时execute select语句不会抛异常，frame也不是None, 而是在fetch时抛，
+                # 此时需要新建conn并重试，因此抛OperationFailure.
+                # 3. upsert的问题已在本函数头通过暴力重连解决. upsert时正常结束和失败结果frame都是None
+                # TODO 此处办法只是规避，要解决根本问题得弄清为何avatica服务端已经timeout还会返回http 200
+                if self.cursor._frame is not None or should_have_return:  # 有返回的语句, 返回结果是空，frame也不应是None
+                    return list(self.cursor.fetchall())
+            except phoenixdb.errors.ProgrammingError as e:
+                raise OperationFailure(origin_error=e)
 
     def create(self, collection, data, mode='INSERT', compress_fields=None, **kwargs):
         query, params = query_parameters_from_create(
