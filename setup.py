@@ -2,18 +2,17 @@ from setuptools import setup, find_packages
 
 
 setup(
-    name='curd',
-    version='0.0.12',
-    url='https://github.com/sfgxuan/curd',
+    name='yicurd',
+    version='1.0.0',
+    url='https://github.com/yimian/curd',
     description='db operations',
-    author='jdxin0',
-    author_email='jdxin00@gmail.com',
     license='MIT',
     keywords='db operations',
     packages=find_packages(),
     install_requires=[],
     extras_require={
         'cassandra': ['cassandra-driver==3.11.0'],
+        'hbase': ['phoenixdb==0.7'],
         'mysql': ['PyMySQL==0.7.11']
     }
 )

@@ -2,3 +2,6 @@
 cassandra-driver==3.11.0
 PyMySQL==0.7.11
 phoenixdb==0.7
+
+# test
+pytest
